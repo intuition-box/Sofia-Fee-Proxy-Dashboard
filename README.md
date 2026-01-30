@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# Sofia Fee Proxy Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Real-time analytics dashboard for the **Sofia Fee Proxy** contract deployed on Intuition Mainnet (Chain ID 1155).
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The Sofia Fee Proxy sits between users and the Intuition MultiVault, collecting fees on `createTriples` and `deposit` operations before forwarding the remaining value. This dashboard visualizes all `TransactionForwarded` events emitted by the proxy to provide fee revenue metrics.
 
-## React Compiler
+**Contract:** `0x26F81d723Ad1648194FAA4b7E235105Fd1212c6c`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- **Contract Overview** — Proxy address, fee recipient, MultiVault address, contract balance
+- **Fee Configuration** — Current fixed fee and percentage fee settings
+- **All-Time Summary** — Total fees collected, total volume, transaction counts by operation type
+- **Cumulative Fee Chart** — SVG line chart showing fee accumulation over time (7d / 30d)
+- **Period Metrics** — Transaction count, TRUST amount, and unique wallets for 7d / 30d / total
+- **Recent Activity** — Table of the last 50 `TransactionForwarded` events with explorer links
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Fee Structure
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Operation | Fee |
+|---|---|
+| `createTriples` | Percentage-based fee on value sent |
+| `deposit` | Fixed fee (0.1 TRUST) + percentage fee |
+| `createAtoms` | No fee charged |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Tech Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **React + TypeScript** (Vite)
+- **Tailwind CSS v4**
+- **viem** — On-chain reads and event log fetching
+- No external charting library (pure SVG)
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The dashboard connects directly to the Intuition Mainnet RPC (`https://rpc.intuition.systems`) — no wallet connection required.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Configuration
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Key constants in `src/config.ts`:
+
+| Constant | Description |
+|---|---|
+| `SOFIA_PROXY_ADDRESS` | Proxy contract address |
+| `DEPLOY_BLOCK` | Block to start scanning events from |
+| `REFRESH_INTERVAL` | Auto-refresh interval (30s) |
+
+## Data Source
+
+All metrics are derived from on-chain `TransactionForwarded` events:
+
 ```
+event TransactionForwarded(
+  string operation,
+  address indexed user,
+  uint256 sofiaFee,
+  uint256 multiVaultValue,
+  uint256 totalReceived
+)
+```
+
+Events are fetched in chunks of 50,000 blocks to avoid RPC limits. Timestamps are estimated from block numbers assuming ~1 block/sec on Intuition Mainnet.
