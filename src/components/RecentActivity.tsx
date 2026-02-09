@@ -1,9 +1,9 @@
 import { EXPLORER_URL } from "../config"
 import { formatTrust } from "../utils/format"
-import type { TransactionForwardedEvent } from "../hooks/useFeeEvents"
+import type { RawEvent } from "../services/EventFetcher"
 
 interface Props {
-  transactions: TransactionForwardedEvent[]
+  transactions: RawEvent[]
 }
 
 function shortenAddress(addr: string) {

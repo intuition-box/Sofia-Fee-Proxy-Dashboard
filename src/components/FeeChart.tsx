@@ -1,4 +1,4 @@
-import type { ChartPoint } from "../hooks/useFeeEvents"
+import type { ChartPoint } from "../services/FeeAnalytics"
 
 interface Props {
   data: ChartPoint[]

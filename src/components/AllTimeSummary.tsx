@@ -1,5 +1,5 @@
 import { MetricCard } from "./MetricCard"
-import type { AllTimeStats } from "../hooks/useFeeEvents"
+import type { AllTimeStats } from "../services/FeeAnalytics"
 
 interface Props {
   allTime: AllTimeStats

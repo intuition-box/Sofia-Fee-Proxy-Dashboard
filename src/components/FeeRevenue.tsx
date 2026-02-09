@@ -1,5 +1,5 @@
 import { MetricCard } from "./MetricCard"
-import type { PeriodStats } from "../hooks/useFeeEvents"
+import type { PeriodStats } from "../services/FeeAnalytics"
 
 interface Props {
   stats7d: PeriodStats

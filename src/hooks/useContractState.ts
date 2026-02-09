@@ -1,13 +1,8 @@
 import { useEffect, useState, useCallback } from "react"
-import { createPublicClient, http } from "viem"
 import { formatTrust } from "../utils/format"
-import { intuitionMainnet, SOFIA_PROXY_ADDRESS, REFRESH_INTERVAL } from "../config"
+import { rpcClient } from "../services/rpcClient"
+import { SOFIA_PROXY_ADDRESS, REFRESH_INTERVAL } from "../config"
 import { SofiaFeeProxyAbi } from "../abi"
-
-const client = createPublicClient({
-  chain: intuitionMainnet,
-  transport: http(),
-})
 
 export interface ContractState {
   depositFixedFee: bigint
@@ -39,37 +34,37 @@ export function useContractState() {
         ethMultiVault,
         contractBalance,
       ] = await Promise.all([
-        client.readContract({
+        rpcClient.readContract({
           address: SOFIA_PROXY_ADDRESS,
           abi: SofiaFeeProxyAbi,
           functionName: "depositFixedFee",
         }),
-        client.readContract({
+        rpcClient.readContract({
           address: SOFIA_PROXY_ADDRESS,
           abi: SofiaFeeProxyAbi,
           functionName: "depositPercentageFee",
         }),
-        client.readContract({
+        rpcClient.readContract({
           address: SOFIA_PROXY_ADDRESS,
           abi: SofiaFeeProxyAbi,
           functionName: "FEE_DENOMINATOR",
         }),
-        client.readContract({
+        rpcClient.readContract({
           address: SOFIA_PROXY_ADDRESS,
           abi: SofiaFeeProxyAbi,
           functionName: "MAX_FEE_PERCENTAGE",
         }),
-        client.readContract({
+        rpcClient.readContract({
           address: SOFIA_PROXY_ADDRESS,
           abi: SofiaFeeProxyAbi,
           functionName: "feeRecipient",
         }),
-        client.readContract({
+        rpcClient.readContract({
           address: SOFIA_PROXY_ADDRESS,
           abi: SofiaFeeProxyAbi,
           functionName: "ethMultiVault",
         }),
-        client.getBalance({ address: SOFIA_PROXY_ADDRESS }),
+        rpcClient.getBalance({ address: SOFIA_PROXY_ADDRESS }),
       ])
 
       const pctNum = Number(depositPercentageFee)
