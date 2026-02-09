@@ -26,7 +26,7 @@ export const SOFIA_PROXY_ADDRESS =
 
 export const EXPLORER_URL = "https://explorer.intuition.systems"
 
-export const REFRESH_INTERVAL = 60_000 // 60s auto-refresh
+export const REFRESH_INTERVAL = 30_000 // 30s auto-refresh
 
-// Block at which the SofiaFeeProxy was deployed (tx 0x185251…)
-export const DEPLOY_BLOCK = 143_120n
+// Block at which the SofiaFeeProxy was deployed — scan all events from here
+export const DEPLOY_BLOCK = 0n
