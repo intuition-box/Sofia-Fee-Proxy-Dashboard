@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useContractState } from "./hooks/useContractState"
-import { useFeeEvents } from "./hooks/useFeeEvents"
+import { useFeeData } from "./hooks/useFeeData"
 import { FeeChart } from "./components/FeeChart"
 import { FeeRevenue } from "./components/FeeRevenue"
 import { ContractOverview } from "./components/ContractOverview"
@@ -42,11 +42,11 @@ function App() {
   } = useContractState()
 
   const {
-    summary,
+    data: summary,
     loading: eventsLoading,
     error: eventsError,
     refetch: refetchEvents,
-  } = useFeeEvents()
+  } = useFeeData()
 
   const loading = stateLoading || eventsLoading
 
@@ -55,7 +55,7 @@ function App() {
       ? summary.chartData7d
       : selectedPeriod === "30d"
         ? summary.chartData30d
-        : summary.chartData30d // total uses 30d chart as base
+        : summary.chartDataTotal
     : []
 
   return (
