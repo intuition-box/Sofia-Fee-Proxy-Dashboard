@@ -17,13 +17,16 @@ export interface RawEvent {
   totalReceived: bigint
   blockNumber: bigint
   txHash: string
-  timestamp: number // real on-chain timestamp
+  timestamp: number // 0 until resolved, then real on-chain timestamp
 }
 
 /**
  * Fetches TransactionForwarded events incrementally.
  * On first call: scans from DEPLOY_BLOCK to current.
  * On subsequent calls: only fetches new blocks since last scan.
+ *
+ * Timestamps are resolved separately via resolveTimestamps() to enable
+ * progressive rendering (show totals immediately, period stats later).
  */
 export class EventFetcher {
   private events: RawEvent[] = []
@@ -34,7 +37,11 @@ export class EventFetcher {
     this.blockResolver = blockResolver
   }
 
-  /** Fetch all events (incremental on subsequent calls). */
+  /**
+   * Fetch all events (incremental on subsequent calls).
+   * Returns events with timestamp=0 for new entries — call resolveTimestamps()
+   * separately to fill in real timestamps.
+   */
   async fetch(): Promise<RawEvent[]> {
     const currentBlock = await rpcClient.getBlockNumber()
 
@@ -48,16 +55,6 @@ export class EventFetcher {
     const newLogs = await this.getLogsInChunks(fromBlock, currentBlock)
 
     if (newLogs.length > 0) {
-      // Calibrate block resolver with earliest event + latest block (2 RPC calls max)
-      const earliestBlock = this.events.length > 0
-        ? this.events[0].blockNumber
-        : newLogs[0].blockNumber
-      await this.blockResolver.calibrate(earliestBlock, currentBlock)
-
-      // Resolve timestamps via interpolation (no RPC calls)
-      const blockNumbers = newLogs.map((log) => log.blockNumber)
-      const timestamps = this.blockResolver.resolveMany(blockNumbers)
-
       const newEvents: RawEvent[] = newLogs.map((log) => ({
         operation: log.args.operation ?? "unknown",
         user: log.args.user ?? "0x",
@@ -66,7 +63,7 @@ export class EventFetcher {
         totalReceived: log.args.totalReceived ?? 0n,
         blockNumber: log.blockNumber,
         txHash: log.transactionHash,
-        timestamp: timestamps.get(log.blockNumber) ?? 0,
+        timestamp: 0, // Resolved later via resolveTimestamps()
       }))
 
       this.events.push(...newEvents)
@@ -75,6 +72,31 @@ export class EventFetcher {
 
     this.lastScannedBlock = currentBlock
     return this.events
+  }
+
+  /**
+   * Resolve timestamps for events that don't have them yet.
+   * Returns the updated events array, or null if nothing changed.
+   */
+  async resolveTimestamps(): Promise<RawEvent[] | null> {
+    const unresolved = this.events.filter((e) => e.timestamp === 0)
+    if (unresolved.length === 0) return null
+
+    const blockNumbers = unresolved.map((e) => e.blockNumber)
+    const timestamps = await this.blockResolver.resolveBlocks(blockNumbers)
+
+    let updated = false
+    for (const event of this.events) {
+      if (event.timestamp === 0) {
+        const ts = timestamps.get(event.blockNumber) ?? 0
+        if (ts > 0) {
+          event.timestamp = ts
+          updated = true
+        }
+      }
+    }
+
+    return updated ? this.events : null
   }
 
   private async getLogsInChunks(

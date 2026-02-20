@@ -7,15 +7,8 @@ import { ContractOverview } from "./components/ContractOverview"
 import { FeeConfig } from "./components/FeeConfig"
 import { AllTimeSummary } from "./components/AllTimeSummary"
 import { RecentActivity } from "./components/RecentActivity"
+import LoaderLoop from "./components/LoaderLoop"
 import { SOFIA_PROXY_ADDRESS } from "./config"
-
-function LoadingSpinner() {
-  return (
-    <div className="flex items-center justify-center py-24">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-    </div>
-  )
-}
 
 function ErrorBanner({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
@@ -27,6 +20,14 @@ function ErrorBanner({ message, onRetry }: { message: string; onRetry: () => voi
       >
         Retry
       </button>
+    </div>
+  )
+}
+
+function SectionLoader() {
+  return (
+    <div className="py-12">
+      <LoaderLoop size={80} />
     </div>
   )
 }
@@ -45,10 +46,9 @@ function App() {
     data: summary,
     loading: eventsLoading,
     error: eventsError,
+    timestampsResolved,
     refetch: refetchEvents,
   } = useFeeData()
-
-  const loading = stateLoading || eventsLoading
 
   const chartData = summary
     ? selectedPeriod === "7d"
@@ -61,7 +61,7 @@ function App() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] px-4 py-8">
       <div className="mx-auto max-w-6xl">
-        {/* Header */}
+        {/* Header — always visible */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">
             Sofia Fee Proxy Dashboard
@@ -83,47 +83,49 @@ function App() {
           </div>
         )}
 
-        {/* Loading */}
-        {loading && <LoadingSpinner />}
-
-        {/* Dashboard */}
-        {!loading && (
-          <div className="space-y-6">
-            {/* Contract Overview + Fee Config */}
-            {state && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                  <ContractOverview state={state} />
-                </div>
-                <div className="lg:col-span-2">
-                  <FeeConfig state={state} />
-                </div>
+        <div className="space-y-6">
+          {/* Contract Overview + Fee Config — shows as soon as contract state loads */}
+          {state ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <ContractOverview state={state} />
               </div>
-            )}
+              <div className="lg:col-span-2">
+                <FeeConfig state={state} />
+              </div>
+            </div>
+          ) : stateLoading ? (
+            <SectionLoader />
+          ) : null}
 
-            {/* All-Time Revenue Summary */}
-            {summary && <AllTimeSummary allTime={summary.allTime} />}
+          {/* All-Time Revenue Summary — shows as soon as events are fetched (no timestamps needed) */}
+          {summary ? (
+            <AllTimeSummary allTime={summary.allTime} />
+          ) : eventsLoading ? (
+            <SectionLoader />
+          ) : null}
 
-            {/* Chart + Period Metrics */}
-            {summary && (
-              <>
-                <FeeChart data={chartData} />
-                <FeeRevenue
-                  stats7d={summary.stats7d}
-                  stats30d={summary.stats30d}
-                  statsTotal={summary.statsTotal}
-                  selectedPeriod={selectedPeriod}
-                  onSelectPeriod={setSelectedPeriod}
-                />
-              </>
-            )}
+          {/* Chart + Period Stats — shows when timestamps are resolved */}
+          {summary && timestampsResolved ? (
+            <>
+              <FeeChart data={chartData} />
+              <FeeRevenue
+                stats7d={summary.stats7d}
+                stats30d={summary.stats30d}
+                statsTotal={summary.statsTotal}
+                selectedPeriod={selectedPeriod}
+                onSelectPeriod={setSelectedPeriod}
+              />
+            </>
+          ) : summary && !timestampsResolved ? (
+            <SectionLoader />
+          ) : null}
 
-            {/* Recent Activity Table */}
-            {summary && (
-              <RecentActivity transactions={summary.recentTransactions} />
-            )}
-          </div>
-        )}
+          {/* Recent Activity — shows as soon as events are fetched (sorted by blockNumber) */}
+          {summary && (
+            <RecentActivity transactions={summary.recentTransactions} />
+          )}
+        </div>
       </div>
     </div>
   )

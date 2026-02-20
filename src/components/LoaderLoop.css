@@ -1,0 +1,141 @@
+.loader-loop-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-loop-svg {
+  overflow: visible;
+}
+
+/* Contours des formes S avec halo */
+.outline-path {
+  fill: none;
+  stroke: #FFF8EE;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 2500;
+  stroke-dashoffset: 2500;
+}
+
+.path-1 {
+  animation: draw-loop 5s ease-in-out infinite, glow-pulse 5s ease-in-out infinite;
+}
+
+.path-2 {
+  animation: draw-loop-reverse 5s ease-in-out infinite, glow-pulse 5s ease-in-out infinite;
+}
+
+@keyframes draw-loop {
+  0% {
+    stroke-dashoffset: 2500;
+    opacity: 0.3;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -2500;
+    opacity: 0.3;
+  }
+}
+
+@keyframes draw-loop-reverse {
+  0% {
+    stroke-dashoffset: -2500;
+    opacity: 0.3;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 2500;
+    opacity: 0.3;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(255, 248, 238, 0.8))
+            drop-shadow(0 0 16px rgba(255, 248, 238, 0.5))
+            drop-shadow(0 0 24px rgba(255, 248, 238, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 4px rgba(255, 248, 238, 0.6))
+            drop-shadow(0 0 8px rgba(255, 248, 238, 0.3));
+  }
+}
+
+/* Groupe central - pas de rotation */
+.center-group {
+  transform-origin: 349px 344px;
+  animation: center-glow 5s ease-in-out infinite;
+}
+
+@keyframes center-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(255, 248, 238, 0.6))
+            drop-shadow(0 0 20px rgba(255, 248, 238, 0.4))
+            drop-shadow(0 0 30px rgba(255, 248, 238, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 2px rgba(255, 248, 238, 0.2));
+  }
+}
+
+/* Losange central - face du haut - alterne clair/sombre */
+.center-diamond {
+  animation: face-alternate-top 5s ease-in-out infinite;
+}
+
+@keyframes face-alternate-top {
+  0%, 100% {
+    fill: #FFFFFF;
+  }
+  50% {
+    fill: #1a1a1a;
+  }
+}
+
+/* Face droite - alterne noir/blanc */
+.center-face-right {
+  animation: face-alternate-right 5s ease-in-out infinite;
+}
+
+@keyframes face-alternate-right {
+  0%, 100% {
+    fill: #000000;
+  }
+  50% {
+    fill: #FFFFFF;
+  }
+}
+
+/* Face gauche - alterne blanc/noir (inversé) */
+.center-face-left {
+  animation: face-alternate-left 5s ease-in-out infinite;
+}
+
+@keyframes face-alternate-left {
+  0%, 100% {
+    fill: #CCCCCC;
+  }
+  50% {
+    fill: #000000;
+  }
+}

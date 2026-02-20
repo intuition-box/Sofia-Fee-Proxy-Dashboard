@@ -47,8 +47,10 @@ export class FeeAnalytics {
     const sevenDaysAgo = now - 7 * 24 * 3600
     const thirtyDaysAgo = now - 30 * 24 * 3600
 
-    // For the "total" chart, start from the earliest event (not epoch 0)
-    const earliestEventTs = events.length > 0 ? events[0].timestamp : now
+    // For the "total" chart, start from the earliest event with a real timestamp.
+    // Events may have timestamp=0 before background resolution completes.
+    const firstResolved = events.find((e) => e.timestamp > 0)
+    const earliestEventTs = firstResolved ? firstResolved.timestamp : now
 
     return {
       stats7d: this.computePeriodStats(events, sevenDaysAgo),

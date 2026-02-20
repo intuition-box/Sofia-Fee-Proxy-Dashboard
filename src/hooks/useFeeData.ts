@@ -13,6 +13,7 @@ export function useFeeData() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [timestampsResolved, setTimestampsResolved] = useState(false)
   const fetchingRef = useRef(false)
 
   const fetchData = useCallback(async () => {
@@ -20,9 +21,20 @@ export function useFeeData() {
     fetchingRef.current = true
 
     try {
+      // Phase 1: Fetch events without timestamps → show totals immediately
       const events = await eventFetcher.fetch()
-      const result = feeAnalytics.computeAll(events)
-      setData(result)
+      const partialResult = feeAnalytics.computeAll(events)
+      setData(partialResult)
+      setLoading(false)
+
+      // Phase 2: Resolve timestamps in background → update period stats + chart
+      const updatedEvents = await eventFetcher.resolveTimestamps()
+      if (updatedEvents) {
+        const fullResult = feeAnalytics.computeAll(updatedEvents)
+        setData(fullResult)
+        setTimestampsResolved(true)
+      }
+
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to fetch fee data")
@@ -38,5 +50,5 @@ export function useFeeData() {
     return () => clearInterval(interval)
   }, [fetchData])
 
-  return { data, loading, error, refetch: fetchData }
+  return { data, loading, error, timestampsResolved, refetch: fetchData }
 }
