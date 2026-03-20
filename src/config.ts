@@ -1,5 +1,8 @@
 import { defineChain } from "viem"
 
+const RPC_KEY = import.meta.env.VITE_RPC_KEY
+const RPC_URL = `https://vib.rpc.intuition.box/http/${RPC_KEY}`
+
 export const intuitionMainnet = defineChain({
   id: 1155,
   name: "Intuition Mainnet",
@@ -10,8 +13,8 @@ export const intuitionMainnet = defineChain({
     symbol: "TRUST",
   },
   rpcUrls: {
-    public: { http: ["https://rpc.intuition.systems"] },
-    default: { http: ["https://rpc.intuition.systems"] },
+    public: { http: [RPC_URL] },
+    default: { http: [RPC_URL] },
   },
   blockExplorers: {
     default: {

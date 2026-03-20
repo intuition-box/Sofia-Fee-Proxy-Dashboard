@@ -103,27 +103,28 @@ export class EventFetcher {
     fromBlock: bigint,
     toBlock: bigint
   ) {
-    const allLogs: Awaited<ReturnType<typeof rpcClient.getLogs<typeof TX_FORWARDED_EVENT>>>  = []
+    // Build all chunk ranges upfront
+    const chunks: { from: bigint; to: bigint }[] = []
     let cursor = fromBlock
-
     while (cursor <= toBlock) {
-      const end =
-        cursor + BLOCK_CHUNK - 1n > toBlock
-          ? toBlock
-          : cursor + BLOCK_CHUNK - 1n
-
-      const logs = await rpcClient.getLogs({
-        address: SOFIA_PROXY_ADDRESS,
-        event: TX_FORWARDED_EVENT,
-        fromBlock: cursor,
-        toBlock: end,
-      })
-
-      allLogs.push(...logs)
+      const end = cursor + BLOCK_CHUNK - 1n > toBlock ? toBlock : cursor + BLOCK_CHUNK - 1n
+      chunks.push({ from: cursor, to: end })
       cursor = end + 1n
     }
 
-    return allLogs
+    // Fetch all chunks in parallel — RpcQueue handles concurrency limiting
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        rpcClient.getLogs({
+          address: SOFIA_PROXY_ADDRESS,
+          event: TX_FORWARDED_EVENT,
+          fromBlock: chunk.from,
+          toBlock: chunk.to,
+        })
+      )
+    )
+
+    return results.flat()
   }
 
   get cachedEventCount(): number {
